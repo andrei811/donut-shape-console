@@ -67,7 +67,7 @@ void M_INV_XY(double A[4][4], double radAngle)
 void M_INV_XYZ(double A[4][4], double radAngle)
 {
     double c = cos(radAngle), s = sin(radAngle);
-    double B[4][4] = { {c * c, -(c * s), -s}, {c * s + c * s * s, c * c - s * s * s, c * s}, {c * c * s - s * s, -(c * s) - c * s * s, c * c} };
+    double B[4][4] = { {0, 0, 0, 0}, {0, c * c, -(c * s), -s}, {0, c * s + c * s * s, c * c - s * s * s, c * s}, {0, c * c * s - s * s, -(c * s) - c * s * s, c * c} };
 
     copyMatrix(A, B);
 }
@@ -135,14 +135,7 @@ void rotate(double radAngle, int axis)
     else if ( axis == 4 )
         M_INV_XY(Rotation, radAngle);
     else if ( axis == 5 )
-    {
         M_INV_XYZ(Rotation, radAngle);
-        // double aux[4][4], auxb[4][4];
-        // M_INV_XY(aux, radAngle);
-        // M_INV_Z(auxb, radAngle);
-        // matMult(aux, auxb);
-        // copyMatrix(Rotation, aux);
-    }
     else
     {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
