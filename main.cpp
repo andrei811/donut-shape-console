@@ -126,6 +126,8 @@ void rotate(double radAngle, int axis)
     double v[4] = { 0, 0, 0, 0 };
     double Rotation[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 
+    int a = 0;
+
     if ( axis == 3 )
         M_INV_X(Rotation, radAngle);
     else if ( axis == 2 )
