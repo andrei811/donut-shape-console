@@ -9,6 +9,7 @@
 #define X_BIAS -20
 #define Y_BIAS -20
 #define Z_BIAS -5
+#define ROTATION 5
 
 using namespace std;
 
@@ -331,7 +332,7 @@ int main()
     {
         if ( angle >= 6.28 )
             angle = 0;
-        rotate(angle, 1);
+        rotate(angle, ROTATION);
         update();
         angle += 0.1;
         // Sleep(1000);
