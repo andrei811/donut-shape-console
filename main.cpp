@@ -3,13 +3,13 @@
 #define SPACE_DIM 100
 #define X_DIM 41
 #define Y_DIM 41
-#define Z_DIM 12
-#define R 8
+#define Z_DIM 41
+#define R 10
 #define r 4
 #define X_BIAS -20
 #define Y_BIAS -20
-#define Z_BIAS -5
-#define ROTATION 5
+#define Z_BIAS -20
+#define ROTATION 4
 
 using namespace std;
 
@@ -17,7 +17,7 @@ struct vect{
     double x, y, z;
     friend ostream& operator<<(ostream& out, const vect& a)
     {
-        out << fixed << setprecision(2) << "{" << a.x << "," << a.y << ", " << a.z << "}";
+        out << fixed << setprecision(2) << "" << a.x << " " << a.y << " " << a.z << "";
         return out;
     }
     double operator*(const vect& a)
@@ -60,9 +60,18 @@ char findLum(double val)
     return gray_scale[11];
 }
 
+void normalize(vect& a)
+{
+    double len = sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+
+    a.x /= len;
+    a.y /= len;
+    a.z /= len;
+}
+
 vect NormVect(double x, double y, double z)
 {
-    double aux = sqrt(x * x + y * y), len = sqrt(x * x + y * y + z * z);
+    double aux = sqrt(x * x + y * y);
 
     if ( aux == 0 )
     {
@@ -74,7 +83,11 @@ vect NormVect(double x, double y, double z)
         exit(EXIT_FAILURE);
     }
 
-    return { 2.0 * x * (R - aux) / (aux * len), 2.0 * y * (R - aux) / (aux * len), 1 / len };
+    vect vax = { 2.0 * x * (R - aux) / (aux), 2.0 * y * (R - aux) / (aux), 1 };
+
+    normalize(vax);
+
+    return vax;
 }
 
 int roundDouble(double x)
@@ -124,14 +137,6 @@ void M_INV_Z(double A[4][4], double radAngle)
     copyMatrix(A, B);
 }
 
-void M_INV_XY(double A[4][4], double radAngle)
-{
-    double c = cos(radAngle), s = sin(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c, 0, -s},{0, s * s, c, s * c},{0, s * c, -s, c * c} };
-
-    copyMatrix(A, B);
-}
-
 void M_INV_XYZ(double A[4][4], double radAngle)
 {
     double c = cos(radAngle), s = sin(radAngle);
@@ -140,9 +145,37 @@ void M_INV_XYZ(double A[4][4], double radAngle)
     copyMatrix(A, B);
 }
 
+void M_X(double A[4][4], double radAngle)
+{
+    double s = sin(radAngle), c = cos(radAngle);
+    double B[4][4] = { {0, 0, 0, 0},{0, 1, 0, 0}, {0, 0, c, -s}, {0, 0, s, c} };
+    copyMatrix(A, B);
+}
+
+void M_Y(double A[4][4], double radAngle)
+{
+    double s = sin(radAngle), c = cos(radAngle);
+    double B[4][4] = { {0, 0, 0, 0},{0, c, 0, s}, {0, 0, 1, 0}, {0, -s, 0, c} };
+    copyMatrix(A, B);
+}
+
+void M_Z(double A[4][4], double radAngle)
+{
+    double s = sin(radAngle), c = cos(radAngle);
+    double B[4][4] = { {0, 0, 0, 0},{0, c, s, 0}, {0, -s, c, 0}, {0, 0, 0, 1} };
+    copyMatrix(A, B);
+}
+
+void M_XYZ(double A[4][4], double radAngle)
+{
+    double s = sin(radAngle), c = cos(radAngle);
+    double B[4][4] = { {0, 0, 0, 0},{0, c * c, s * c, s}, {0, c * s * s - c * s, c * c + s * s * s, -c * s}, {0, c * c * (-s) - s * s, c * s - c * s * s , c * c} };
+    copyMatrix(A, B);
+}
+
 inline double formula(double x, double y, double z)
 {
-    double aux = (7.0 - sqrt(x * x + y * y));
+    double aux = (R - sqrt(x * x + y * y));
     return 1.0 * aux * aux + z * z;
 }
 
@@ -163,7 +196,7 @@ void createTorus()
     for ( int i = 0; i <= X_DIM; i++ )
         for ( int j = 0; j <= Y_DIM; j++ )
             for ( int k = 0; k <= Z_DIM; k++ )
-                if ( round(formula(i + X_BIAS, j + Y_BIAS, k + Z_BIAS)) <= (1.0 * r * r) )
+                if ( roundDouble(formula(i + X_BIAS, j + Y_BIAS, k + Z_BIAS)) <= (1.0 * r * r) )
                 {
                     space[i][j][k] = gray_scale[0];
                     Normals[i][j][k] = NormVect(i + X_BIAS, j + Y_BIAS, k + Z_BIAS);
@@ -171,7 +204,7 @@ void createTorus()
                 else
                 {
                     space[i][j][k] = ' ';
-                    Normals[i][j][k] = { -100,-100,-100 };
+                    Normals[i][j][k] = { -100, -100, -100 };
                 }
 }
 
@@ -193,7 +226,7 @@ inline bool inside_space(double v[4])
 }
 
 /*
-@param axis 1-x, 2-y, 3-z, 4-XY
+@param axis 1-x, 2-y, 3-z, 4-XYZ
 */
 void rotate(double radAngle, int axis)
 {
@@ -204,17 +237,16 @@ void rotate(double radAngle, int axis)
 
     double v[4] = { 0, 0, 0, 0 };
     double Rotation[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
+    double NormRot[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 
     if ( axis == 3 )
-        M_INV_X(Rotation, radAngle);
+        M_INV_X(Rotation, radAngle), M_X(NormRot, radAngle);
     else if ( axis == 2 )
-        M_INV_Y(Rotation, radAngle);
+        M_INV_Y(Rotation, radAngle), M_Y(NormRot, radAngle);
     else if ( axis == 1 )
-        M_INV_Z(Rotation, radAngle);
+        M_INV_Z(Rotation, radAngle), M_Z(NormRot, radAngle);
     else if ( axis == 4 )
-        M_INV_XY(Rotation, radAngle);
-    else if ( axis == 5 )
-        M_INV_XYZ(Rotation, radAngle);
+        M_INV_XYZ(Rotation, radAngle), M_XYZ(NormRot, radAngle);
     else
     {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
@@ -248,10 +280,12 @@ void rotate(double radAngle, int axis)
                 v[2] = rotNormals[i][j][k].y;
                 v[3] = rotNormals[i][j][k].z;
 
-                matVectMult(v, Rotation);
+                matVectMult(v, NormRot);
                 rotNormals[i][j][k].x = v[1];
                 rotNormals[i][j][k].y = v[2];
                 rotNormals[i][j][k].z = v[3];
+
+                normalize(rotNormals[i][j][k]);
             }
 }
 
@@ -261,7 +295,7 @@ void transform_2d()
         for ( int j = 0; j <= Y_DIM; j++ )
             displayMat[i][j] = ' ';
 
-    for ( int k = 0; k <= Z_DIM; k++ )
+    for ( int k = Z_DIM; k >= 0; k-- )
         for ( int i = 0; i <= X_DIM; i++ )
             for ( int j = 0; j <= Y_DIM; j++ )
                 if ( displayMat[i][j] == ' ' && rotMat[i][j][k] != ' ' )
@@ -292,6 +326,7 @@ void update()
     cout << "||";
     for ( int j = 0; j <= 2 * Y_DIM + 2; j++ )
         cout << "-";
+    cout << "\n";
 
     for ( int i = 0; i <= X_DIM; i++ )
     {
@@ -311,38 +346,28 @@ void update()
 
 int main()
 {
-    light = { 100, 100, 100 };
-    createTorus();
+    light = { 50, 50, 100 };
 
     clearscreen();
     for ( int i = 1; i <= 30; i++ )
         cout << "                                                                         \n";
     clearscreen();
+    createTorus();
 
+    // cout << Normals[14 - X_BIAS][0 - Y_BIAS][0 - Z_BIAS];
     // rotate(0, 1);
     // transform_2d();
     // for ( int i = 0; i <= X_DIM; i++ )
     // {
+    //     // cout << "{";
     //     for ( int j = 0; j <= Y_DIM; j++ )
     //         // for ( int k = 0; k <= Y_DIM; k++ )
     //         cout << displayMat[i][j] << displayMat[i][j];
-    //     cout << "\n";
+    //     // cout << Normals[i][j][5] << endl;
+    //     cout << endl;
     // }
     // cout << endl;
-    // cout << endl;
-    // double minn = 0;
-    // // cout << rotMat[13][18][1] << "   " << Normals[13][18][1] << Normals[13][18][1] * light << endl;
-    // for ( int i = 0; i <= X_DIM; i++ )
-    // {
-    //     for ( int j = 0; j <= Y_DIM; j++ )
-    //         // cout << i << " " << j << endl;
-    //         if ( displayMat[i][j] == '!' )
-    //         {
-    //             for ( int k = 0; k <= Y_DIM; k++ )
-    //                 minn = max(minn, ( double )(Normals[i][j][k] * light));
-    //         }
-    // }
-    // cout << minn;
+
     // return 0;
 
     double angle = 0;
