@@ -29,21 +29,35 @@ struct vect{
 
 // ostream& operator<<(ofstream& out, vect a)
 
-char gray_scale[] = ".:*#@";
+char gray_scale[] = ".,-~:;=!*#$@";
 char space[SPACE_DIM][SPACE_DIM][SPACE_DIM];
 char rotMat[SPACE_DIM][SPACE_DIM][SPACE_DIM], displayMat[SPACE_DIM][SPACE_DIM];
 
 char findLum(double val)
 {
-    if ( val < 0 )
+    if ( val < -300 )
         return gray_scale[0];
-    if ( val < 1 )
+    if ( val < -250 )
         return gray_scale[1];
-    if ( val < 3 )
+    if ( val < -200 )
         return gray_scale[2];
-    if ( val < 5 )
+    if ( val < -150 )
         return gray_scale[3];
-    return gray_scale[4];
+    if ( val < -100 )
+        return gray_scale[4];
+    if ( val < -50 )
+        return gray_scale[5];
+    if ( val < 0 )
+        return gray_scale[6];
+    if ( val < 50 )
+        return gray_scale[7];
+    if ( val < 100 )
+        return gray_scale[8];
+    if ( val < 150 )
+        return gray_scale[9];
+    if ( val < 200 )
+        return gray_scale[10];
+    return gray_scale[11];
 }
 
 vect NormVect(double x, double y, double z)
@@ -65,7 +79,7 @@ vect NormVect(double x, double y, double z)
 
 int roundDouble(double x)
 {
-    if ( x <= 0.5 )
+    if ( (x - ( int )(x)) <= 0.5 )
         return ( int )x;
     return ( int )x + 1;
 }
@@ -155,7 +169,10 @@ void createTorus()
                     Normals[i][j][k] = NormVect(i + X_BIAS, j + Y_BIAS, k + Z_BIAS);
                 }
                 else
+                {
                     space[i][j][k] = ' ';
+                    Normals[i][j][k] = { -100,-100,-100 };
+                }
 }
 
 void FindSurfaceNormal(int x, int y, int z)
@@ -183,7 +200,7 @@ void rotate(double radAngle, int axis)
     for ( int i = 0; i <= X_DIM; i++ )
         for ( int j = 0; j <= Y_DIM; j++ )
             for ( int k = 0; k <= Z_DIM; k++ )
-                rotMat[i][j][k] = ' ';
+                rotMat[i][j][k] = ' ', rotNormals[i][j][k] = { -100,-100,-100 };
 
     double v[4] = { 0, 0, 0, 0 };
     double Rotation[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
@@ -208,7 +225,6 @@ void rotate(double radAngle, int axis)
         exit(EXIT_FAILURE);
     }
 
-
     for ( int i = 0; i <= X_DIM; i++ )
         for ( int j = 0; j <= Y_DIM; j++ )
             for ( int k = 0; k <= Z_DIM; k++ )
@@ -223,7 +239,6 @@ void rotate(double radAngle, int axis)
                 v[2] -= Y_BIAS;
                 v[3] -= Z_BIAS;
 
-                // cout << i << " " << j << " " << k << "       " << v[1] << " " << v[2] << " " << v[3] << "\n";
                 if ( !inside_space(v) )
                     continue;
                 rotMat[i][j][k] = space[roundDouble(v[1])][roundDouble(v[2])][roundDouble(v[3])];
@@ -296,7 +311,7 @@ void update()
 
 int main()
 {
-    light.x = light.y = 3;
+    light = { 100, 100, 100 };
     createTorus();
 
     clearscreen();
@@ -310,18 +325,22 @@ int main()
     // {
     //     for ( int j = 0; j <= Y_DIM; j++ )
     //         // for ( int k = 0; k <= Y_DIM; k++ )
-    //         cout << space[i][j][5];
+    //         cout << displayMat[i][j] << displayMat[i][j];
     //     cout << "\n";
     // }
     // cout << endl;
     // cout << endl;
-    // double minn = INT_MAX;
-
+    // double minn = 0;
+    // // cout << rotMat[13][18][1] << "   " << Normals[13][18][1] << Normals[13][18][1] * light << endl;
     // for ( int i = 0; i <= X_DIM; i++ )
     // {
     //     for ( int j = 0; j <= Y_DIM; j++ )
-    //         for ( int k = 0; k <= Y_DIM; k++ )
-    //             minn = min(minn, ( double )(Normals[i][j][k] * light));
+    //         // cout << i << " " << j << endl;
+    //         if ( displayMat[i][j] == '!' )
+    //         {
+    //             for ( int k = 0; k <= Y_DIM; k++ )
+    //                 minn = max(minn, ( double )(Normals[i][j][k] * light));
+    //         }
     // }
     // cout << minn;
     // return 0;
