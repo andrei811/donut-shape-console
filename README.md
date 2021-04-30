@@ -14,7 +14,7 @@ git clone https://github.com/andrei811/donut-shape-console.git
 
 * Go to "code" folder, inside the project
 ```
-    cd "downloadPath"\src\code
+cd "downloadPath"\src\code
 ```
 
 * Type in cmd in order to compile the files:
