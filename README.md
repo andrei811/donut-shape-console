@@ -22,9 +22,9 @@ cd "downloadPath"\src\code
 g++ *.cpp -o donut
 ```
 
-* Then, execute the program
-    The `-a` (axis) argument takes after it `x` or `y` or `z` or `xyz`
-    By default, the standard rotation axis is `xyz` 
+* Then, execute the program.
+    The `-a` (axis) argument takes after it `x` or `y` or `z` or `xyz`.
+    By default, the standard rotation axis is `xyz`.
 
     Thus, you can execute as that
     ```
