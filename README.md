@@ -1,7 +1,7 @@
 # Rotating character donut in C++
 
 ## Prerequisites
-    * MinGW complier
+   * MinGW complier
 
 ## How to run the code on Windows?
 
