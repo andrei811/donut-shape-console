@@ -6,7 +6,7 @@
 ## How to run the code on Windows?
 
 * Download the project in your computer
-### Open cmd, then type and replace "downloadPath" with the desired download path
+###### Open cmd, then type and replace "downloadPath" with the desired download path
 ```
 cd "downloadPath"
 git clone https://github.com/andrei811/donut-shape-console.git
