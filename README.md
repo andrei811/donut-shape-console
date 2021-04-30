@@ -1,5 +1,7 @@
 # Rotating character donut in C++
 
+![Donut](https://raw.githubusercontent.com/andrei811/donut-shape-console/main/image/donut.gif)
+
 ## Prerequisites
    * MinGW complier
 
