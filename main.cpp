@@ -1,5 +1,7 @@
 #include <bits/stdc++.h>
 #include <windows.h>
+#include "vector.h"
+#include "matrix.h"
 #define SPACE_DIM 100
 #define X_DIM 41
 #define Y_DIM 41
@@ -13,25 +15,20 @@
 
 using namespace std;
 
-struct vect{
-    double x, y, z;
-    friend ostream& operator<<(ostream& out, const vect& a)
-    {
-        out << fixed << setprecision(2) << "" << a.x << " " << a.y << " " << a.z << "";
-        return out;
-    }
-    double operator*(const vect& a)
-    {
-        double aux = a.x * x + a.x * y + a.x * z + a.y * x + a.y * y + a.y * z + a.z * x + a.z * y + a.z * z;
-        return aux;
-    }
-}Normals[SPACE_DIM][SPACE_DIM][SPACE_DIM], light, rotNormals[SPACE_DIM][SPACE_DIM][SPACE_DIM];
+void printErrorMessageAndExit(string message)
+{
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
+    cout << "ERROR: ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+    cout << message << "\n";
+    exit(EXIT_FAILURE);
+}
 
-// ostream& operator<<(ofstream& out, vect a)
+VECTOR3 Normals[SPACE_DIM][SPACE_DIM][SPACE_DIM], rotNormals[SPACE_DIM][SPACE_DIM][SPACE_DIM], light;
 
 char gray_scale[] = ".,-~:;=!*#$@";
-char space[SPACE_DIM][SPACE_DIM][SPACE_DIM];
-char rotMat[SPACE_DIM][SPACE_DIM][SPACE_DIM], displayMat[SPACE_DIM][SPACE_DIM];
+bool space[SPACE_DIM][SPACE_DIM][SPACE_DIM], rotMat[SPACE_DIM][SPACE_DIM][SPACE_DIM];
+char displayMat[SPACE_DIM][SPACE_DIM];
 
 char findLum(double val)
 {
@@ -60,16 +57,7 @@ char findLum(double val)
     return gray_scale[11];
 }
 
-void normalize(vect& a)
-{
-    double len = sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-
-    a.x /= len;
-    a.y /= len;
-    a.z /= len;
-}
-
-vect NormVect(double x, double y, double z)
+VECTOR3 NormVECTOR3(double x, double y, double z)
 {
     double aux = sqrt(x * x + y * y);
 
@@ -79,13 +67,13 @@ vect NormVect(double x, double y, double z)
         cout << "ERROR: ";
         // system("Color 07");
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
-        cout << "DIVIDING BY 0 IN 'NormVect' FUNCTION\n";
+        cout << "DIVIDING BY 0 IN 'NormVECTOR3' FUNCTION\n";
         exit(EXIT_FAILURE);
     }
 
-    vect vax = { 2.0 * x * (R - aux) / (aux), 2.0 * y * (R - aux) / (aux), 1 };
+    VECTOR3 vax = { 2.0 * x * (R - aux) / (aux), 2.0 * y * (R - aux) / (aux), 1 };
 
-    normalize(vax);
+    vax.normalize();
 
     return vax;
 }
@@ -97,98 +85,10 @@ int roundDouble(double x)
     return ( int )x + 1;
 }
 
-void copyMatrix(double A[4][4], double B[4][4])
-{
-    for ( int i = 1; i <= 3; i++ )
-        for ( int j = 1;j <= 3; j++ )
-            A[i][j] = B[i][j];
-}
-
-void matMult(double A[4][4], double B[4][4])
-{
-    double C[4][4] = { {0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0} };
-
-    for ( int i = 1; i <= 3; i++ )
-        for ( int j = 1; j <= 3; j++ )
-            for ( int k = 1; k <= 3; k++ )
-                C[i][j] += A[i][k] * B[k][j];
-
-    copyMatrix(A, C);
-}
-
-void M_INV_X(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, 1, 0, 0}, {0, 0, c, s}, {0, 0, -s, c} };
-    copyMatrix(A, B);
-}
-
-void M_INV_Y(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c, 0, -s}, {0, 0, 1, 0}, {0, s, 0, c} };
-    copyMatrix(A, B);
-}
-
-void M_INV_Z(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c, -s, 0}, {0, s, c, 0}, {0, 0, 0, 1} };
-    copyMatrix(A, B);
-}
-
-void M_INV_XYZ(double A[4][4], double radAngle)
-{
-    double c = cos(radAngle), s = sin(radAngle);
-    double B[4][4] = { {0, 0, 0, 0}, {0, c * c, -(c * s), -s}, {0, c * s + c * s * s, c * c - s * s * s, c * s}, {0, c * c * s - s * s, -(c * s) - c * s * s, c * c} };
-
-    copyMatrix(A, B);
-}
-
-void M_X(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, 1, 0, 0}, {0, 0, c, -s}, {0, 0, s, c} };
-    copyMatrix(A, B);
-}
-
-void M_Y(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c, 0, s}, {0, 0, 1, 0}, {0, -s, 0, c} };
-    copyMatrix(A, B);
-}
-
-void M_Z(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c, s, 0}, {0, -s, c, 0}, {0, 0, 0, 1} };
-    copyMatrix(A, B);
-}
-
-void M_XYZ(double A[4][4], double radAngle)
-{
-    double s = sin(radAngle), c = cos(radAngle);
-    double B[4][4] = { {0, 0, 0, 0},{0, c * c, s * c, s}, {0, c * s * s - c * s, c * c + s * s * s, -c * s}, {0, c * c * (-s) - s * s, c * s - c * s * s , c * c} };
-    copyMatrix(A, B);
-}
-
 inline double formula(double x, double y, double z)
 {
     double aux = (R - sqrt(x * x + y * y));
     return 1.0 * aux * aux + z * z;
-}
-
-void matVectMult(double v[4], double A[4][4])
-{
-    double C[4] = { 0, 0, 0, 0 };
-
-    for ( int i = 1; i <= 3; i++ )
-        for ( int j = 1; j <= 3; j++ )
-            C[i] += 1.0 * v[j] * A[i][j];
-
-    for ( int i = 1; i <= 3; i++ )
-        v[i] = C[i];
 }
 
 void createTorus()
@@ -198,31 +98,19 @@ void createTorus()
             for ( int k = 0; k <= Z_DIM; k++ )
                 if ( roundDouble(formula(i + X_BIAS, j + Y_BIAS, k + Z_BIAS)) <= (1.0 * r * r) )
                 {
-                    space[i][j][k] = gray_scale[0];
-                    Normals[i][j][k] = NormVect(i + X_BIAS, j + Y_BIAS, k + Z_BIAS);
+                    space[i][j][k] = 1;
+                    Normals[i][j][k] = NormVECTOR3(i + X_BIAS, j + Y_BIAS, k + Z_BIAS);
                 }
                 else
                 {
-                    space[i][j][k] = ' ';
+                    space[i][j][k] = 0;
                     Normals[i][j][k] = { -100, -100, -100 };
                 }
 }
 
-void FindSurfaceNormal(int x, int y, int z)
+inline bool insideSpace(VECTOR3 v)
 {
-    int nudge = 0.25;
-    int newx, newy;
-    int sign = 1;
-
-    if ( formula(x + nudge, y, z) > 1.0 * r * r )
-        sign = -1;
-
-
-}
-
-inline bool inside_space(double v[4])
-{
-    return !(v[1] < 0 || v[2] < 0 || v[3] < 0 || v[1] > X_DIM || v[2] > Y_DIM || v[3] > Z_DIM);
+    return !(v[0] < 0 || v[1] < 0 || v[2] < 0 || v[0] > X_DIM || v[1] > Y_DIM || v[2] > Z_DIM);
 }
 
 /*
@@ -230,23 +118,29 @@ inline bool inside_space(double v[4])
 */
 void rotate(double radAngle, int axis)
 {
-    for ( int i = 0; i <= X_DIM; i++ )
-        for ( int j = 0; j <= Y_DIM; j++ )
-            for ( int k = 0; k <= Z_DIM; k++ )
-                rotMat[i][j][k] = ' ', rotNormals[i][j][k] = { -100,-100,-100 };
+    double s = sin(radAngle), c = cos(radAngle);
+    MATRIX3 InvRot, NormRot;
 
-    double v[4] = { 0, 0, 0, 0 };
-    double Rotation[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
-    double NormRot[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
-
-    if ( axis == 3 )
-        M_INV_X(Rotation, radAngle), M_X(NormRot, radAngle);
-    else if ( axis == 2 )
-        M_INV_Y(Rotation, radAngle), M_Y(NormRot, radAngle);
-    else if ( axis == 1 )
-        M_INV_Z(Rotation, radAngle), M_Z(NormRot, radAngle);
-    else if ( axis == 4 )
-        M_INV_XYZ(Rotation, radAngle), M_XYZ(NormRot, radAngle);
+    if ( axis == 3 ) // rotatie pe x
+    {
+        InvRot = MATRIX3({ {1, 0, 0}, { 0, c, s}, { 0, -s, c} });
+        NormRot = MATRIX3({ { 1, 0, 0}, { 0, c, -s}, { 0, s, c} });
+    }
+    else if ( axis == 2 ) // rotatie pe y
+    {
+        InvRot = MATRIX3({ { c, 0, -s}, { 0, 1, 0}, { s, 0, c} });
+        NormRot = MATRIX3({ { c, 0, s}, { 0, 1, 0}, { -s, 0, c} });
+    }
+    else if ( axis == 1 ) // rotatie pe z
+    {
+        InvRot = MATRIX3({ { c, s, 0}, { -s, c, 0}, { 0, 0, 1} });
+        NormRot = MATRIX3({ { c, -s, 0}, { s, c, 0}, { 0, 0, 1} });
+    }
+    else if ( axis == 4 ) // rotatie pe xyz
+    {
+        InvRot = MATRIX3({ { c * c, c * s, -s}, { c * s * s - c * s, c * c + s * s * s, c * s}, { c * c * s + s * s, s * s * c - s * c, c * c} });
+        NormRot = MATRIX3({ { c * c, -s * c, s}, {c * s * s + c * s, c * c - s * s * s, -c * s}, { s * s - c * c * s, c * s + c * s * s , c * c} });
+    }
     else
     {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
@@ -257,35 +151,39 @@ void rotate(double radAngle, int axis)
         exit(EXIT_FAILURE);
     }
 
+    VECTOR3 v;
+
     for ( int i = 0; i <= X_DIM; i++ )
         for ( int j = 0; j <= Y_DIM; j++ )
             for ( int k = 0; k <= Z_DIM; k++ )
             {
-                v[1] = i + X_BIAS;
-                v[2] = j + Y_BIAS;
-                v[3] = k + Z_BIAS;
+                // create the vector
+                v = VECTOR3(i + X_BIAS, j + Y_BIAS, k + Z_BIAS);
 
-                matVectMult(v, Rotation);
+                // find the initial position in space for the v vector
+                v = v * InvRot;
 
-                v[1] -= X_BIAS;
-                v[2] -= Y_BIAS;
-                v[3] -= Z_BIAS;
+                // subtract the biases
+                v[0] = v[0] - X_BIAS;
+                v[1] = v[1] - Y_BIAS;
+                v[2] = v[2] - Z_BIAS;
 
-                if ( !inside_space(v) )
+                // init rotMat and rotNormals
+                rotMat[i][j][k] = 0;
+                rotNormals[i][j][k] = { -100,-100,-100 };
+
+                // if the vector is inside the working space
+                if ( !insideSpace(v) )
                     continue;
-                rotMat[i][j][k] = space[roundDouble(v[1])][roundDouble(v[2])][roundDouble(v[3])];
-                rotNormals[i][j][k] = Normals[roundDouble(v[1])][roundDouble(v[2])][roundDouble(v[3])];
 
-                v[1] = rotNormals[i][j][k].x;
-                v[2] = rotNormals[i][j][k].y;
-                v[3] = rotNormals[i][j][k].z;
+                rotMat[i][j][k] = space[roundDouble(v[0])][roundDouble(v[1])][roundDouble(v[2])];
 
-                matVectMult(v, NormRot);
-                rotNormals[i][j][k].x = v[1];
-                rotNormals[i][j][k].y = v[2];
-                rotNormals[i][j][k].z = v[3];
+                // find the initial normal for the point on the surface...
+                rotNormals[i][j][k] = Normals[roundDouble(v[0])][roundDouble(v[1])][roundDouble(v[2])];
 
-                normalize(rotNormals[i][j][k]);
+                rotNormals[i][j][k] = NormRot * rotNormals[i][j][k]; // rotate the normal vector by multiplying by the rotation matrix
+
+                rotNormals[i][j][k].normalize();
             }
 }
 
@@ -298,7 +196,7 @@ void transform_2d()
     for ( int k = Z_DIM; k >= 0; k-- )
         for ( int i = 0; i <= X_DIM; i++ )
             for ( int j = 0; j <= Y_DIM; j++ )
-                if ( displayMat[i][j] == ' ' && rotMat[i][j][k] != ' ' )
+                if ( displayMat[i][j] == ' ' && rotMat[i][j][k] )
                 {
                     // displayMat[i][j] = rotMat[i][j][k];
                     displayMat[i][j] = findLum(( double )(rotNormals[i][j][k] * light));
@@ -326,7 +224,7 @@ void update()
     cout << "||";
     for ( int j = 0; j <= 2 * Y_DIM + 2; j++ )
         cout << "-";
-    cout << "\n";
+    cout << "||\n";
 
     for ( int i = 0; i <= X_DIM; i++ )
     {
@@ -346,7 +244,9 @@ void update()
 
 int main()
 {
-    light = { 50, 50, 100 };
+    // cout << VECTOR3(1, 2, 3) * MATRIX3({ {1, 1, 2}, {1, 2, 2}, {0, 2, 3} });
+    // return 0;
+    light = { 0, 100, 100 };
 
     clearscreen();
     for ( int i = 1; i <= 30; i++ )
@@ -354,7 +254,6 @@ int main()
     clearscreen();
     createTorus();
 
-    // cout << Normals[14 - X_BIAS][0 - Y_BIAS][0 - Z_BIAS];
     // rotate(0, 1);
     // transform_2d();
     // for ( int i = 0; i <= X_DIM; i++ )
@@ -362,12 +261,11 @@ int main()
     //     // cout << "{";
     //     for ( int j = 0; j <= Y_DIM; j++ )
     //         // for ( int k = 0; k <= Y_DIM; k++ )
-    //         cout << displayMat[i][j] << displayMat[i][j];
+    //         cout << rotMat[i][j][20] << rotMat[i][j][20];
     //     // cout << Normals[i][j][5] << endl;
     //     cout << endl;
     // }
     // cout << endl;
-
     // return 0;
 
     double angle = 0;
